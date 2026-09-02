@@ -1,25 +1,29 @@
 
 const express = require('express');
 const app = express();
-const qrRoutes = require('./routes/qrcodeRoutes');
+const campaignRoutes = require('./routes/campaignRoutes');
 
 app.use(express.json());
 
-// Mount routes
-app.use('/qrcodes', qrRoutes);
+app.use('/campaigns', campaignRoutes);
 
-// Health check
-app.get('/', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    app: 'Advertising campaign analytics API',
+    timestamp: new Date().toISOString()
+  });
+});
 
-// 404 handler for unknown routes
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error'
+  });
 });
 
 const port = process.env.PORT || 3000;
