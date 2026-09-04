@@ -1,0 +1,18 @@
+<%- include('partials/header') %>
+
+  <section>
+    <h2>Добавить кампанию</h2>
+    <form method="post" action="/add">
+      <div><label>Название: <input name="name" required></label></div>
+      <div><label>Канал: <input name="channel" required></label></div>
+      <div><label>Бюджет: <input name="budget" type="number" step="0.01"></label></div>
+      <div><label>Потрачено: <input name="spent" type="number" step="0.01"></label></div>
+      <div><label>Клики: <input name="clicks" type="number"></label></div>
+      <div><label>Конверсии: <input name="conversions" type="number"></label></div>
+      <div><label>Доход: <input name="revenue" type="number" step="0.01"></label></div>
+      <div><label>Статус: <select name="status"><option value="active">активна</option><option value="paused">приостановлена</option></select></label></div>
+      <div style="margin-top:8px"><button class="btn" type="submit">Создать</button> <a class="btn secondary" href="/">Отмена</a></div>
+    </form>
+  </section>
+
+<%- include('partials/footer') %>
