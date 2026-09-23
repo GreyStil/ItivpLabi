@@ -1,7 +1,10 @@
+require('./config/loadEnv');
 
 const express = require('express');
-const app = express();
+const { sequelize } = require('./models');
 const campaignRoutes = require('./routes/campaignRoutes');
+
+const app = express();
 
 app.use(express.json());
 
@@ -11,6 +14,7 @@ app.get('/', (req, res) => {
   res.json({
     status: 'ok',
     app: 'Advertising campaign analytics API',
+    storage: 'PostgreSQL + Sequelize',
     timestamp: new Date().toISOString()
   });
 });
@@ -27,6 +31,26 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+
+async function start() {
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL is not set. Copy .env.example to .env and add Neon connection string.');
+    process.exit(1);
+  }
+
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection established.');
+  } catch (error) {
+    console.error('Unable to connect to the database:', error.message);
+    process.exit(1);
+  }
+
+  app.listen(port, () => console.log(`Server running on port ${port}`));
+}
+
+if (require.main === module) {
+  start();
+}
 
 module.exports = app;

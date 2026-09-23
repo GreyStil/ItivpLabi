@@ -1,0 +1,8 @@
+{"ts":"2026-09-04T16:44:47.938Z","error":"Not Found","stack":null,"url":"/.well-known/appspecific/com.chrome.devtools.json","method":"GET","user":"Гость"}
+{"ts":"2026-09-04T16:44:52.336Z","error":"Not Found","stack":null,"url":"/.well-known/appspecific/com.chrome.devtools.json","method":"GET","user":"Гость"}
+{"ts":"2026-09-04T16:44:54.468Z","error":"Not Found","stack":null,"url":"/.well-known/appspecific/com.chrome.devtools.json","method":"GET","user":"Гость"}
+{"ts":"2026-09-04T16:47:19.564Z","error":"Not Found","stack":null,"url":"/qrcodes","method":"GET","user":"Гость"}
+{"ts":"2026-09-04T16:47:19.853Z","error":"Not Found","stack":null,"url":"/qrcodes/1","method":"GET","user":"Гость"}
+{"ts":"2026-09-04T16:50:46.359Z","error":"Not Found","stack":null,"url":"/favicon.ico","method":"GET","user":"Гость"}
+{"ts":"2026-09-04T16:51:50.824Z","error":"Not Found","stack":null,"url":"/.well-known/appspecific/com.chrome.devtools.json","method":"GET","user":"Гость"}
+{"ts":"2026-09-04T16:51:51.787Z","error":"Not Found","stack":null,"url":"/.well-known/appspecific/com.chrome.devtools.json","method":"GET","user":"Гость"}
