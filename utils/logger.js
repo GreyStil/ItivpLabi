@@ -14,16 +14,24 @@ function write(file, line) {
 }
 
 function safeBody(body) {
-  try { return JSON.parse(JSON.stringify(body)); } catch (e) { return String(body); }
+  try {
+    return JSON.parse(JSON.stringify(body));
+  } catch (e) {
+    return String(body);
+  }
 }
 
 module.exports = {
-  logRequest(req) {
+  logRequest(req, timestamp) {
+    const ts = timestamp || new Date().toISOString();
+    const textLine = `[${ts}] ${req.method} ${req.originalUrl}`;
+    write(accessFile, textLine);
+
     const entry = {
-      ts: new Date().toISOString(),
+      ts,
       method: req.method,
       url: req.originalUrl,
-      ip: req.ip || req.connection && req.connection.remoteAddress,
+      ip: req.ip || (req.connection && req.connection.remoteAddress),
       user: req.user && req.user.name,
       body: safeBody(req.body)
     };
