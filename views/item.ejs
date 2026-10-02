@@ -1,0 +1,22 @@
+<%- include('partials/header') %>
+
+  <section>
+    <h2>Кампания: <%= item.name %> (ID: <%= item.id %>)</h2>
+    <ul>
+      <li>Канал: <%= item.channel %></li>
+      <li>Бюджет: <%= item.budget %></li>
+      <li>Потрачено: <%= item.spent %></li>
+      <li>Клики: <%= item.clicks %></li>
+      <li>Конверсии: <%= item.conversions %></li>
+      <li>Доход: <%= item.revenue %></li>
+      <li>CPC: <%= item.cpc %></li>
+      <li>Конверсия: <%= item.conversionRate %> %</li>
+      <li>ROI: <%= item.roi %> %</li>
+      <li>Статус: <%= item.status %></li>
+    </ul>
+    <div class="actions">
+      <a class="btn secondary" href="/">Назад</a>
+    </div>
+  </section>
+
+<%- include('partials/footer') %>
