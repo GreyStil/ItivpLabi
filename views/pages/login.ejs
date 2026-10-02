@@ -1,8 +1,23 @@
-<section>
-  <h2>Вход (имитация)</h2>
-  <p>Нажмите кнопку, чтобы «войти» — в cookie сохранится флаг авторизации (как <code>?auth=1</code>).</p>
-  <div class="actions">
-    <a class="btn" href="/login?auth=1">Войти как пользователь</a>
-    <a class="btn secondary" href="/">На главную</a>
-  </div>
+<section class="auth-card">
+  <h2 class="page-title">Вход</h2>
+  <p class="page-subtitle">Используйте email и пароль (как API <code>/auth/login</code> в лаб. 3).</p>
+
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <form class="form-stack" method="post" action="/login">
+    <label>
+      Email
+      <input type="email" name="email" required autocomplete="email" value="<%= email || '' %>" />
+    </label>
+    <label>
+      Пароль
+      <input type="password" name="password" required minlength="6" autocomplete="current-password" />
+    </label>
+    <div class="actions">
+      <button class="btn" type="submit">Войти</button>
+      <a class="btn secondary" href="/register">Создать аккаунт</a>
+    </div>
+  </form>
 </section>

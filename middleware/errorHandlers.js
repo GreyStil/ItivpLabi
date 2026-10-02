@@ -2,7 +2,11 @@ const logger = require('../utils/logger');
 const { renderWithLayout } = require('../utils/renderLayout');
 
 function notFoundHandler(req, res) {
-  if (req.originalUrl.startsWith('/campaigns') || req.originalUrl.startsWith('/health')) {
+  if (
+    req.originalUrl.startsWith('/campaigns') ||
+    req.originalUrl.startsWith('/health') ||
+    req.originalUrl.startsWith('/auth')
+  ) {
     return res.status(404).json({ error: 'Not Found' });
   }
   try {
@@ -25,7 +29,11 @@ function errorHandler(err, req, res, next) {
     console.error('logError failed', e);
   }
 
-  if (req.originalUrl.startsWith('/campaigns') || req.originalUrl.startsWith('/health')) {
+  if (
+    req.originalUrl.startsWith('/campaigns') ||
+    req.originalUrl.startsWith('/health') ||
+    req.originalUrl.startsWith('/auth')
+  ) {
     return res.status(err.status || 500).json({
       error: err.message || 'Internal Server Error'
     });

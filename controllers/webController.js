@@ -1,5 +1,7 @@
 const model = require('../models/campaignModel');
+const authService = require('../services/authService');
 const { renderWithLayout } = require('../utils/renderLayout');
+const { setAuthCookie, clearAuthCookie } = require('../middleware/auth');
 
 function listItems(req, res, next) {
   try {
@@ -73,13 +75,67 @@ function createItem(req, res, next) {
 
 function showLogin(req, res, next) {
   try {
-    if (req.user && req.user.authenticated && req.query.auth === '1') {
+    if (req.user && req.user.id) {
       return res.redirect('/');
     }
-    renderWithLayout(res, 'pages/login', { title: 'Вход' });
+    renderWithLayout(res, 'pages/login', {
+      title: 'Вход',
+      error: null,
+      email: ''
+    });
   } catch (err) {
     next(err);
   }
+}
+
+async function submitLogin(req, res, next) {
+  try {
+    const { email, password } = req.body;
+    const result = await authService.login({ email, password });
+    setAuthCookie(res, result.token);
+    res.redirect('/');
+  } catch (err) {
+    renderWithLayout(res, 'pages/login', {
+      title: 'Вход',
+      error: err.message || 'Ошибка входа',
+      email: req.body.email || ''
+    });
+  }
+}
+
+function showRegister(req, res, next) {
+  try {
+    if (req.user && req.user.id) {
+      return res.redirect('/');
+    }
+    renderWithLayout(res, 'pages/register', {
+      title: 'Регистрация',
+      error: null,
+      email: ''
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function submitRegister(req, res, next) {
+  try {
+    const { email, password } = req.body;
+    const result = await authService.register({ email, password });
+    setAuthCookie(res, result.token);
+    res.redirect('/');
+  } catch (err) {
+    renderWithLayout(res, 'pages/register', {
+      title: 'Регистрация',
+      error: err.message || 'Ошибка регистрации',
+      email: req.body.email || ''
+    });
+  }
+}
+
+function logout(req, res) {
+  clearAuthCookie(res);
+  res.redirect('/');
 }
 
 module.exports = {
@@ -87,5 +143,9 @@ module.exports = {
   showItem,
   showAddForm,
   createItem,
-  showLogin
+  showLogin,
+  submitLogin,
+  showRegister,
+  submitRegister,
+  logout
 };

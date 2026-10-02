@@ -1,0 +1,23 @@
+<section class="auth-card">
+  <h2 class="page-title">Регистрация</h2>
+  <p class="page-subtitle">Минимум 6 символов в пароле. Данные хранятся в памяти сервера.</p>
+
+  <% if (error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } %>
+
+  <form class="form-stack" method="post" action="/register">
+    <label>
+      Email
+      <input type="email" name="email" required autocomplete="email" value="<%= email || '' %>" />
+    </label>
+    <label>
+      Пароль
+      <input type="password" name="password" required minlength="6" autocomplete="new-password" />
+    </label>
+    <div class="actions">
+      <button class="btn" type="submit">Зарегистрироваться</button>
+      <a class="btn secondary" href="/login">Уже есть аккаунт</a>
+    </div>
+  </form>
+</section>

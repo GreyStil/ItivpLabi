@@ -1,31 +1,88 @@
-const AUTH_COOKIE = 'sim_auth';
+const jwt = require('jsonwebtoken');
 
-function authSimulation(req, res, next) {
-  if (req.query.auth === '1') {
-    res.cookie(AUTH_COOKIE, '1', {
-      maxAge: 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: 'lax'
-    });
+const TOKEN_COOKIE = 'token';
+
+/** API: Bearer JWT (как в 2-lab, шаг 3) */
+function authenticate(req, res, next) {
+  const header = req.headers.authorization;
+
+  if (!header || !header.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authorization token required' });
   }
 
-  const authenticated =
-    req.cookies[AUTH_COOKIE] === '1' || req.query.auth === '1';
+  const token = header.slice('Bearer '.length);
 
-  req.user = authenticated
-    ? { name: 'Пользователь', authenticated: true }
-    : { name: 'Гость', authenticated: false };
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    return next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
 
-  res.locals.user = req.user;
+/** Web: пользователь из httpOnly cookie с JWT */
+function loadUserFromCookie(req, res, next) {
+  const token = req.cookies[TOKEN_COOKIE];
+
+  if (!token) {
+    req.user = null;
+    res.locals.user = {
+      name: 'Гость',
+      email: null,
+      role: null,
+      authenticated: false
+    };
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    res.locals.user = {
+      name: decoded.email,
+      email: decoded.email,
+      role: decoded.role,
+      authenticated: true
+    };
+  } catch (err) {
+    res.clearCookie(TOKEN_COOKIE);
+    req.user = null;
+    res.locals.user = {
+      name: 'Гость',
+      email: null,
+      role: null,
+      authenticated: false
+    };
+  }
   next();
 }
 
-/** Имитация авторизации: без входа — редирект на /login */
+function setAuthCookie(res, token) {
+  res.cookie(TOKEN_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 1000
+  });
+}
+
+function clearAuthCookie(res) {
+  res.clearCookie(TOKEN_COOKIE);
+}
+
+/** Web: редирект на /login */
 function requireAuth(req, res, next) {
-  if (!req.user || !req.user.authenticated) {
+  if (!req.user || !req.user.id) {
     return res.redirect('/login');
   }
   next();
 }
 
-module.exports = { authSimulation, requireAuth };
+module.exports = {
+  authenticate,
+  loadUserFromCookie,
+  setAuthCookie,
+  clearAuthCookie,
+  requireAuth,
+  TOKEN_COOKIE
+};

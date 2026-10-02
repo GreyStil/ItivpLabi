@@ -3,48 +3,46 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title><%= title %> — Аналитика рекламных кампаний</title>
-    <style>
-      :root{ --primary:#2b6cb0; --muted:#6b7280; --bg:#f7fafc; --card:#ffffff }
-      *{box-sizing:border-box}
-      body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:0;background:var(--bg);color:#111}
-      .container{max-width:1100px;margin:28px auto;padding:18px}
-      header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
-      header h1{margin:0;color:var(--primary);font-size:1.5rem}
-      nav a{color:var(--primary);text-decoration:none;margin-right:12px}
-      .topbar{display:flex;gap:12px;align-items:center}
-      .user-badge{font-size:14px;color:var(--muted)}
-      .card{background:var(--card);border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,0.06)}
-      table{width:100%;border-collapse:collapse;margin-top:12px}
-      th,td{padding:10px;border-bottom:1px solid #eef2f7;text-align:left}
-      th{background:#f1f5f9;color:#334155;font-weight:600}
-      .btn{display:inline-block;padding:8px 12px;border-radius:6px;background:var(--primary);color:#fff;text-decoration:none;border:none;cursor:pointer}
-      .btn.secondary{background:#edf2ff;color:var(--primary);border:1px solid #c7d2fe}
-      form.filter{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-      form.filter input, form.filter select{padding:6px 8px;border:1px solid #ddd;border-radius:6px}
-      .actions{margin-top:12px}
-      footer{margin-top:18px;color:#6b7280;font-size:13px}
-      @media(max-width:720px){header{flex-direction:column;align-items:flex-start} table{font-size:13px}}
-    </style>
+    <title><%= title %> — Аналитика кампаний</title>
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
     <div class="container">
-      <header>
-        <h1>Аналитика рекламных кампаний</h1>
+      <header class="site-header">
+        <div class="brand">
+          <h1>Аналитика рекламных кампаний</h1>
+          <p>ROI, CPC и эффективность кампаний</p>
+        </div>
         <div class="topbar">
           <nav>
             <a href="/">Главная</a>
-            <a href="/add">Добавить кампанию</a>
-            <a href="/login">Войти</a>
+            <% if (user.authenticated) { %>
+              <a href="/add">Добавить</a>
+            <% } %>
+            <% if (!user.authenticated) { %>
+              <a href="/login">Вход</a>
+              <a href="/register">Регистрация</a>
+            <% } %>
           </nav>
-          <span class="user-badge"><%= user.name %></span>
+          <div class="user-chip">
+            <span><%= user.authenticated ? user.email : 'Гость' %></span>
+            <% if (user.authenticated && user.role) { %>
+              <span class="role"><%= user.role %></span>
+            <% } %>
+          </div>
+          <% if (user.authenticated) { %>
+            <form method="post" action="/logout" style="margin:0">
+              <button class="btn secondary" type="submit">Выйти</button>
+            </form>
+          <% } %>
         </div>
       </header>
+
       <main class="card">
         <%- body %>
       </main>
-      <footer>
-        <hr />
+
+      <footer class="site-footer">
         <small>Аналитика кампаний © <%= new Date().getFullYear() %></small>
       </footer>
     </div>

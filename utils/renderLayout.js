@@ -5,15 +5,16 @@ const viewsPath = path.join(__dirname, '..', 'views');
 
 function renderWithLayout(res, pageView, data = {}) {
   const pagePath = path.join(viewsPath, `${pageView}.ejs`);
-  ejs.renderFile(pagePath, data, (err, body) => {
+  const viewData = { ...res.locals, ...data };
+  ejs.renderFile(pagePath, viewData, (err, body) => {
     if (err) {
       return res.status(500).render('500', { error: err, title: '500' });
     }
     res.render('layout', {
-      ...data,
-      user: data.user || res.locals.user || { name: 'Гость' },
+      ...viewData,
+      user: viewData.user || res.locals.user || { name: 'Гость', authenticated: false },
       body,
-      title: data.title || 'Аналитика рекламных кампаний'
+      title: viewData.title || 'Аналитика рекламных кампаний'
     });
   });
 }
