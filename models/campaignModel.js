@@ -51,8 +51,17 @@ function getById(id) {
 }
 
 function add(item) {
+  if (!item || typeof item.name !== 'string' || !item.name.trim()) {
+    throw new Error('Invalid campaign: name is required');
+  }
+  if (typeof item.channel !== 'string' || !item.channel.trim()) {
+    throw new Error('Invalid campaign: channel is required');
+  }
+
   const merged = {
     ...item,
+    name: item.name.trim(),
+    channel: item.channel.trim(),
     id: nextId++,
     createdAt: new Date().toISOString(),
     ...calculateMetrics(item)

@@ -1,20 +1,107 @@
 <section>
   <h2 class="page-title">Новая кампания</h2>
-  <p class="page-subtitle">Доступно только авторизованным пользователям.</p>
+  <p class="page-subtitle">Все поля обязательны. Числа — неотрицательные; «Потрачено» не больше «Бюджета».</p>
 
-  <form class="form-stack" method="post" action="/add" style="max-width:520px">
-    <label>Название <input name="name" required /></label>
-    <label>Канал <input name="channel" required placeholder="search, social, display" /></label>
-    <label>Бюджет <input name="budget" type="number" step="0.01" min="0" /></label>
-    <label>Потрачено <input name="spent" type="number" step="0.01" min="0" /></label>
-    <label>Клики <input name="clicks" type="number" min="0" /></label>
-    <label>Конверсии <input name="conversions" type="number" min="0" /></label>
-    <label>Доход <input name="revenue" type="number" step="0.01" min="0" /></label>
+  <% if (errors && errors.length) { %>
+    <div class="alert alert-error">
+      <strong>Исправьте ошибки:</strong>
+      <ul style="margin:8px 0 0 18px;padding:0">
+        <% errors.forEach(function(msg){ %>
+          <li><%= msg %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form class="form-stack" method="post" action="/add" style="max-width:520px" novalidate>
     <label>
-      Статус
-      <select name="status">
-        <option value="active">активна</option>
-        <option value="paused">приостановлена</option>
+      Название *
+      <input
+        name="name"
+        required
+        maxlength="200"
+        value="<%= (form && form.name) ? form.name : '' %>"
+        autocomplete="off"
+      />
+    </label>
+    <label>
+      Канал *
+      <input
+        name="channel"
+        required
+        maxlength="80"
+        pattern="[a-zA-Z\u0400-\u04FF0-9_\-\s]+"
+        title="Буквы, цифры, пробел, дефис"
+        placeholder="search, social, display"
+        value="<%= (form && form.channel) ? form.channel : '' %>"
+      />
+    </label>
+    <label>
+      Бюджет *
+      <input
+        name="budget"
+        type="number"
+        step="0.01"
+        min="0"
+        max="1000000000"
+        required
+        value="<%= (form && form.budget !== undefined && form.budget !== '') ? form.budget : '' %>"
+      />
+    </label>
+    <label>
+      Потрачено *
+      <input
+        name="spent"
+        type="number"
+        step="0.01"
+        min="0"
+        max="1000000000"
+        required
+        value="<%= (form && form.spent !== undefined && form.spent !== '') ? form.spent : '' %>"
+      />
+    </label>
+    <label>
+      Клики *
+      <input
+        name="clicks"
+        type="number"
+        step="1"
+        min="0"
+        max="1000000000"
+        required
+        value="<%= (form && form.clicks !== undefined && form.clicks !== '') ? form.clicks : '' %>"
+      />
+    </label>
+    <label>
+      Конверсии *
+      <input
+        name="conversions"
+        type="number"
+        step="1"
+        min="0"
+        max="1000000000"
+        required
+        value="<%= (form && form.conversions !== undefined && form.conversions !== '') ? form.conversions : '' %>"
+      />
+    </label>
+    <label>
+      Доход *
+      <input
+        name="revenue"
+        type="number"
+        step="0.01"
+        min="0"
+        max="1000000000"
+        required
+        value="<%= (form && form.revenue !== undefined && form.revenue !== '') ? form.revenue : '' %>"
+      />
+    </label>
+    <label>
+      Статус *
+      <select name="status" required>
+        <option value="" disabled <%= !(form && form.status) ? 'selected' : '' %>>— выберите —</option>
+        <option value="active" <%= (form && form.status === 'active') ? 'selected' : '' %>>активна</option>
+        <option value="paused" <%= (form && form.status === 'paused') ? 'selected' : '' %>>приостановлена</option>
       </select>
     </label>
     <div class="actions">
