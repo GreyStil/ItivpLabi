@@ -18,6 +18,28 @@ header h1 {
   font-size: 0.9rem;
 }
 
+.login-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.login-bar input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.error-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
 .loading {
   text-align: center;
   margin-top: 48px;

@@ -1,6 +1,7 @@
 require('./config/loadEnv');
 
 const express = require('express');
+const cors = require('cors');
 const { sequelize } = require('./models');
 const campaignRoutes = require('./routes/campaignRoutes');
 const authRoutes = require('./routes/auth');
@@ -8,6 +9,7 @@ const profileRoutes = require('./routes/profile');
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 app.use('/auth', authRoutes);
