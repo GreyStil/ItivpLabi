@@ -17,6 +17,19 @@ const emptyForm = {
   status: 'active'
 };
 
+const CHANNEL_LABELS = {
+  search: 'Поиск',
+  social: 'Соцсети',
+  video: 'Видео',
+  email: 'Email'
+};
+
+const STATUS_LABELS = {
+  active: 'Активна',
+  paused: 'Пауза',
+  completed: 'Завершена'
+};
+
 function toPayload(form) {
   return {
     name: form.name.trim(),
@@ -29,6 +42,23 @@ function toPayload(form) {
     status: form.status,
     priority: 1
   };
+}
+
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString('ru-RU');
+}
+
+function formatPercent(value) {
+  const num = Number(value);
+  if (Number.isNaN(num)) return '—';
+  return `${num.toLocaleString('ru-RU', { maximumFractionDigits: 1 })}%`;
+}
+
+function spentShare(budget, spent) {
+  const b = Number(budget) || 0;
+  const s = Number(spent) || 0;
+  if (b <= 0) return s > 0 ? 100 : 0;
+  return Math.min(100, Math.round((s / b) * 100));
 }
 
 export default function CampaignList() {
@@ -62,13 +92,18 @@ export default function CampaignList() {
   }, []);
 
   useEffect(() => {
-    document.title = loading ? 'Загрузка кампаний...' : `Campaigns (${items.length}) | API`;
+    document.title = loading ? 'Загрузка… | AdPulse' : `AdPulse · ${items.length} кампаний`;
   }, [items.length, loading]);
 
   const stats = useMemo(() => {
     const totalBudget = items.reduce((sum, item) => sum + Number(item.budget || 0), 0);
+    const totalSpent = items.reduce((sum, item) => sum + Number(item.spent || 0), 0);
     const activeCount = items.filter((item) => item.status === 'active').length;
-    return { total: items.length, activeCount, totalBudget };
+    const rois = items.map((item) => Number(item.roi)).filter((v) => !Number.isNaN(v));
+    const avgRoi = rois.length
+      ? rois.reduce((sum, v) => sum + v, 0) / rois.length
+      : null;
+    return { total: items.length, activeCount, totalBudget, totalSpent, avgRoi };
   }, [items]);
 
   const visibleItems = useMemo(() => {
@@ -78,6 +113,7 @@ export default function CampaignList() {
     }
     list.sort((a, b) => {
       if (sortBy === 'budget') return Number(b.budget) - Number(a.budget);
+      if (sortBy === 'roi') return Number(b.roi || 0) - Number(a.roi || 0);
       return String(a.name).localeCompare(String(b.name), 'ru');
     });
     return list;
@@ -123,7 +159,9 @@ export default function CampaignList() {
       resetForm();
       try {
         const response = await updateCampaign(editId, payload);
-        setItems((prev) => prev.map((item) => (item.id === editId || item.id === response.data.id ? response.data : item)));
+        setItems((prev) =>
+          prev.map((item) => (item.id === editId || item.id === response.data.id ? response.data : item))
+        );
         setNotice('Кампания обновлена');
       } catch (err) {
         setItems(previous);
@@ -179,138 +217,260 @@ export default function CampaignList() {
 
   return (
     <div className="app-shell">
-      <header>
-        <h1>Рекламные кампании</h1>
-        <p className="subtitle">Клиент React подключён к REST API (PostgreSQL + JWT)</p>
+      <header className="brand-panel">
+        <div>
+          <p className="brand-kicker">AdPulse Analytics</p>
+          <h1>Рекламные кампании</h1>
+          <p className="subtitle">
+            Живая панель эффективности: бюджет, расход, ROI и статусы — данные с REST API
+            (PostgreSQL + JWT).
+          </p>
+        </div>
+        <div className="brand-meta">
+          <span>
+            <span className={`auth-dot ${token ? 'on' : ''}`} />
+            {token ? 'Сессия активна' : 'Гость · только просмотр'}
+          </span>
+          <span>API · localhost:3000</span>
+        </div>
       </header>
 
       <form className="login-bar" onSubmit={handleLogin}>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email" />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="пароль"
-        />
-        <button type="submit">Войти</button>
-        {token && (
-          <button type="button" className="secondary" onClick={handleLogout}>
-            Выйти
-          </button>
-        )}
+        <label>
+          Email
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@lab.local" />
+        </label>
+        <label>
+          Пароль
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+          />
+        </label>
+        <div className="field-actions">
+          <button type="submit">Войти</button>
+          {token && (
+            <button type="button" className="secondary" onClick={handleLogout}>
+              Выйти
+            </button>
+          )}
+        </div>
       </form>
 
       {notice && <p className="autosave">{notice}</p>}
       {error && (
         <div className="error-box">
           <p>{error}</p>
-          <button type="button" onClick={loadCampaigns}>
+          <button type="button" className="ghost" onClick={loadCampaigns}>
             Повторить
           </button>
         </div>
       )}
 
-      <section className="stats">
-        <div>Всего: {stats.total}</div>
-        <div>Active: {stats.activeCount}</div>
-        <div>Бюджет: {stats.totalBudget.toLocaleString('ru-RU')}</div>
-      </section>
-
-      <section className="controls">
-        <label>
-          Фильтр по статусу
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="all">Все</option>
-            {STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Сортировка
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="name">По названию</option>
-            <option value="budget">По бюджету</option>
-          </select>
-        </label>
-      </section>
-
-      <form className="campaign-form" onSubmit={handleSubmit}>
-        <h2>{editId ? 'Редактирование кампании' : 'Новая кампания'}</h2>
-        <input
-          type="text"
-          placeholder="Название"
-          value={form.name}
-          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-        />
-        <select
-          value={form.channel}
-          onChange={(e) => setForm((prev) => ({ ...prev, channel: e.target.value }))}
-        >
-          {CHANNELS.map((channel) => (
-            <option key={channel} value={channel}>
-              {channel}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          placeholder="Бюджет"
-          value={form.budget}
-          onChange={(e) => setForm((prev) => ({ ...prev, budget: e.target.value }))}
-        />
-        <input
-          type="number"
-          placeholder="Потрачено"
-          value={form.spent}
-          onChange={(e) => setForm((prev) => ({ ...prev, spent: e.target.value }))}
-        />
-        <select
-          value={form.status}
-          onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value }))}
-        >
-          {STATUSES.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-        <div className="form-actions">
-          <button type="submit">{editId ? 'Сохранить' : 'Добавить'}</button>
-          {editId && (
-            <button type="button" className="secondary" onClick={resetForm}>
-              Отмена
-            </button>
-          )}
+      <section className="stats" aria-label="Сводка">
+        <div className="stat">
+          <span className="stat-label">Кампаний</span>
+          <div className="stat-value">{stats.total}</div>
         </div>
-      </form>
+        <div className="stat">
+          <span className="stat-label">Активные</span>
+          <div className="stat-value">{stats.activeCount}</div>
+        </div>
+        <div className="stat">
+          <span className="stat-label">Бюджет</span>
+          <div className="stat-value">
+            {formatMoney(stats.totalBudget)} <em>₽</em>
+          </div>
+        </div>
+        <div className="stat">
+          <span className="stat-label">{stats.avgRoi != null ? 'Средний ROI' : 'Потрачено'}</span>
+          <div className="stat-value">
+            {stats.avgRoi != null ? (
+              <>
+                {formatPercent(stats.avgRoi)}
+              </>
+            ) : (
+              <>
+                {formatMoney(stats.totalSpent)} <em>₽</em>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
 
-      {loading ? (
-        <p className="loading">Загрузка кампаний с сервера...</p>
-      ) : (
-        <ul className="campaign-list">
-          {visibleItems.map((item) => (
-            <li key={item.id} className="campaign-item">
-              <div>
-                <strong>{item.name}</strong>
-                <p>
-                  {item.channel} | budget: {item.budget} | spent: {item.spent} | {item.status}
-                </p>
-              </div>
-              <div className="item-actions">
-                <button type="button" onClick={() => handleEdit(item)}>
-                  Edit
-                </button>
-                <button type="button" className="danger" onClick={() => handleDelete(item.id)}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="workspace">
+        <section className="controls">
+          <label>
+            Фильтр по статусу
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="all">Все статусы</option>
+              {STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {STATUS_LABELS[status] || status}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Сортировка
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="name">По названию</option>
+              <option value="budget">По бюджету</option>
+              <option value="roi">По ROI</option>
+            </select>
+          </label>
+        </section>
+
+        <form className="campaign-form" onSubmit={handleSubmit}>
+          <h2>{editId ? 'Редактирование кампании' : 'Новая кампания'}</h2>
+          <p className="form-hint">
+            {token
+              ? 'Изменения сразу уходят на сервер. Удаление доступно администратору.'
+              : 'Для создания и правок нужна авторизация.'}
+          </p>
+          <label>
+            Название
+            <input
+              type="text"
+              placeholder="Например, Google Search Q3"
+              value={form.name}
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+            />
+          </label>
+          <label>
+            Канал
+            <select
+              value={form.channel}
+              onChange={(e) => setForm((prev) => ({ ...prev, channel: e.target.value }))}
+            >
+              {CHANNELS.map((channel) => (
+                <option key={channel} value={channel}>
+                  {CHANNEL_LABELS[channel] || channel}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Бюджет
+            <input
+              type="number"
+              placeholder="0"
+              value={form.budget}
+              onChange={(e) => setForm((prev) => ({ ...prev, budget: e.target.value }))}
+            />
+          </label>
+          <label>
+            Потрачено
+            <input
+              type="number"
+              placeholder="0"
+              value={form.spent}
+              onChange={(e) => setForm((prev) => ({ ...prev, spent: e.target.value }))}
+            />
+          </label>
+          <label>
+            Статус
+            <select
+              value={form.status}
+              onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value }))}
+            >
+              {STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {STATUS_LABELS[status] || status}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="form-actions">
+            <button type="submit">{editId ? 'Сохранить' : 'Добавить'}</button>
+            {editId && (
+              <button type="button" className="secondary" onClick={resetForm}>
+                Отмена
+              </button>
+            )}
+          </div>
+        </form>
+
+        <section>
+          <div className="list-head">
+            <h2>Список кампаний</h2>
+            <span>
+              Показано {visibleItems.length} из {items.length}
+            </span>
+          </div>
+
+          {loading ? (
+            <p className="loading">Загрузка кампаний с сервера…</p>
+          ) : visibleItems.length === 0 ? (
+            <p className="empty-state">Нет кампаний по выбранному фильтру.</p>
+          ) : (
+            <ul className="campaign-list">
+              {visibleItems.map((item) => {
+                const share = spentShare(item.budget, item.spent);
+                const over = Number(item.spent) > Number(item.budget) && Number(item.budget) > 0;
+                return (
+                  <li
+                    key={item.id}
+                    className={`campaign-item is-${item.status || 'active'}`}
+                  >
+                    <div>
+                      <div className="item-top">
+                        <strong>{item.name}</strong>
+                        <span className="tag tag-channel">
+                          {CHANNEL_LABELS[item.channel] || item.channel}
+                        </span>
+                        <span className={`tag tag-status ${item.status || ''}`}>
+                          {STATUS_LABELS[item.status] || item.status}
+                        </span>
+                      </div>
+
+                      <div className="metrics-row">
+                        <div className="metric">
+                          <span>Бюджет</span>
+                          <b>{formatMoney(item.budget)} ₽</b>
+                        </div>
+                        <div className="metric">
+                          <span>Потрачено</span>
+                          <b>{formatMoney(item.spent)} ₽</b>
+                        </div>
+                        <div className="metric">
+                          <span>ROI</span>
+                          <b>{item.roi != null ? formatPercent(item.roi) : '—'}</b>
+                        </div>
+                        <div className="metric">
+                          <span>CPC</span>
+                          <b>{item.cpc != null ? `${formatMoney(item.cpc)} ₽` : '—'}</b>
+                        </div>
+                      </div>
+
+                      <div className="budget-track" aria-hidden="true">
+                        <div
+                          className={`budget-fill${over ? ' over' : ''}`}
+                          style={{ width: `${share}%` }}
+                        />
+                      </div>
+                      <div className="budget-caption">
+                        <span>Освоение бюджета</span>
+                        <span>{share}%</span>
+                      </div>
+                    </div>
+                    <div className="item-actions">
+                      <button type="button" className="ghost" onClick={() => handleEdit(item)}>
+                        Изменить
+                      </button>
+                      <button type="button" className="danger" onClick={() => handleDelete(item.id)}>
+                        Удалить
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
